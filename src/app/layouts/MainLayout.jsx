@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import Breadcrumbs from "./Breadcrumbs";
 
 const MainLayout = () => {
   return (
@@ -10,9 +11,12 @@ const MainLayout = () => {
       <div className="flex-1">
         <Header />
 
+        
         <main className="p-6">
-          <Outlet />
+        <Breadcrumbs />
+        <Outlet />
         </main>
+
       </div>
     </div>
   );
