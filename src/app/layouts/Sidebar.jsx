@@ -68,7 +68,7 @@ const Sidebar = () => {
       <div className="h-16 border-b border-slate-200 px-4 flex items-center justify-between">
         {!sidebarCollapsed && (
           <h1 className="text-xl font-bold text-blue-600">
-            PMMS
+            EPMC PMS
           </h1>
         )}
 
