@@ -1,18 +1,50 @@
+import { useEffect, useState } from "react";
 import {
   Bell,
   Moon,
   Search,
   Sun,
+  CalendarClock,
 } from "lucide-react";
 import { useUIStore } from "../../app/store/uiStore";
 
 const Header = () => {
-  const { darkMode, toggleDarkMode } =
-    useUIStore();
+  const { darkMode, toggleDarkMode } = useUIStore();
+
+  const [currentDateTime, setCurrentDateTime] = useState(
+    new Date()
+  );
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedDate = currentDateTime.toLocaleDateString(
+    "en-IN",
+    {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }
+  );
+
+  const formattedTime = currentDateTime.toLocaleTimeString(
+    "en-IN",
+    {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    }
+  );
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between">
-      {/* Search */}
+    <header className="sticky top-0 z-50 h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between">
       <div className="flex items-center gap-3 bg-slate-100 px-4 py-2 rounded-xl w-96">
         <Search
           size={18}
@@ -32,9 +64,24 @@ const Header = () => {
         />
       </div>
 
-      {/* Right Section */}
       <div className="flex items-center gap-4">
-        {/* Theme Toggle */}
+        <div className="hidden xl:flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-100 text-slate-700">
+          <CalendarClock
+            size={18}
+            className="text-slate-500"
+          />
+
+          <div className="leading-tight">
+            <p className="text-xs text-slate-500">
+              {formattedDate}
+            </p>
+
+            <p className="text-sm font-semibold text-slate-800">
+              {formattedTime}
+            </p>
+          </div>
+        </div>
+
         <button
           onClick={toggleDarkMode}
           className="
@@ -51,7 +98,6 @@ const Header = () => {
           )}
         </button>
 
-        {/* Notifications */}
         <button
           className="
             relative
@@ -76,10 +122,8 @@ const Header = () => {
           />
         </button>
 
-        {/* Divider */}
         <div className="h-8 w-px bg-slate-200" />
 
-        {/* User Profile */}
         <div className="flex items-center gap-3 cursor-pointer">
           <div
             className="

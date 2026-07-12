@@ -11,6 +11,7 @@ import Settings from "../../pages/Settings";
 import NotFound from "../../pages/NotFound";
 import MaintenanceRequest from "../../pages/MaintenanceRequest";
 import RequestsQueue from "../../pages/RequestsQueue";
+import WorkOrders from "../../pages/WorkOrders";
 
 export const router = createBrowserRouter([
   {
@@ -50,7 +51,10 @@ export const router = createBrowserRouter([
         path: "requests",
         element: <RequestsQueue />,
         },
-
+        {
+        path: "work-orders",
+        element: <WorkOrders />,
+        },
     ],
   },
   {

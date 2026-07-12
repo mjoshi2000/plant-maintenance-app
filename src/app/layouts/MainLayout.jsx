@@ -8,15 +8,13 @@ const MainLayout = () => {
     <div className="flex min-h-screen bg-slate-100">
       <Sidebar />
 
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <Header />
 
-        
         <main className="p-6">
-        <Breadcrumbs />
-        <Outlet />
+          <Breadcrumbs />
+          <Outlet />
         </main>
-
       </div>
     </div>
   );
