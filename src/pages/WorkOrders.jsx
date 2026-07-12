@@ -1,14 +1,24 @@
-/* eslint-disable react/prop-types */
+import { useState } from "react";
+
 import {
   ClipboardList,
   PlayCircle,
   CheckCircle2,
   UserCheck,
   Wrench,
+  X,
+  CalendarDays,
 } from "lucide-react";
 
 import { useWorkOrderStore } from "../app/store/workOrderStore";
 import { useRequestStore } from "../app/store/requestStore";
+
+const technicians = [
+  "Technician A",
+  "Technician B",
+  "Technician C",
+  "Technician D",
+];
 
 const statusStyles = {
   Open: "bg-blue-100 text-blue-700 border-blue-200",
@@ -26,7 +36,7 @@ const priorityStyles = {
 
 const WorkOrderCard = ({
   workOrder,
-  onAssign,
+  onOpenAssignModal,
   onStart,
   onComplete,
 }) => {
@@ -68,6 +78,12 @@ const WorkOrderCard = ({
         <p>
           <strong>Assigned To:</strong> {workOrder.assignedTo}
         </p>
+
+        {workOrder.dueDate && (
+          <p>
+            <strong>Due Date:</strong> {workOrder.dueDate}
+          </p>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -87,7 +103,8 @@ const WorkOrderCard = ({
       <div className="mt-5 border-t border-slate-100 pt-4 space-y-2">
         {workOrder.status === "Open" && (
           <button
-            onClick={() => onAssign(workOrder.id)}
+            type="button"
+            onClick={() => onOpenAssignModal(workOrder)}
             className="w-full inline-flex items-center justify-center gap-2 bg-orange-600 text-white py-3 rounded-xl hover:bg-orange-700 transition"
           >
             <UserCheck size={18} />
@@ -97,6 +114,7 @@ const WorkOrderCard = ({
 
         {workOrder.status === "Assigned" && (
           <button
+            type="button"
             onClick={() => onStart(workOrder.id)}
             className="w-full inline-flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-xl hover:bg-purple-700 transition"
           >
@@ -107,6 +125,7 @@ const WorkOrderCard = ({
 
         {workOrder.status === "In Progress" && (
           <button
+            type="button"
             onClick={() => onComplete(workOrder.id)}
             className="w-full inline-flex items-center justify-center gap-2 bg-green-600 text-white py-3 rounded-xl hover:bg-green-700 transition"
           >
@@ -118,6 +137,38 @@ const WorkOrderCard = ({
         {workOrder.status === "Completed" && (
           <div className="w-full bg-green-50 text-green-700 py-3 rounded-xl text-center text-sm font-medium">
             Work completed
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const WorkOrderColumn = ({
+  title,
+  icon: Icon,
+  iconColor,
+  items,
+  children,
+}) => {
+  return (
+    <div className="bg-slate-100 rounded-3xl p-4 min-h-[520px]">
+      <div className="flex items-center gap-3 mb-5">
+        <Icon size={18} className={iconColor} />
+
+        <h2 className="font-semibold">{title}</h2>
+
+        <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm text-slate-600">
+          {items.length}
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        {items.length > 0 ? (
+          children
+        ) : (
+          <div className="border border-dashed border-slate-300 rounded-2xl p-6 text-center text-sm text-slate-400">
+            No work orders
           </div>
         )}
       </div>
@@ -144,17 +195,152 @@ const EmptyState = () => {
   );
 };
 
+const AssignTechnicianModal = ({
+  workOrder,
+  onClose,
+  onAssign,
+}) => {
+  const [selectedTechnician, setSelectedTechnician] =
+    useState("Technician A");
+
+  const [dueDate, setDueDate] = useState("");
+
+  if (!workOrder) {
+    return null;
+  }
+
+  const handleAssign = () => {
+    onAssign(workOrder.id, selectedTechnician, dueDate);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div
+        className="absolute inset-0 bg-slate-900/40"
+        onClick={onClose}
+      />
+
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6">
+        <div className="flex items-start justify-between border-b border-slate-200 pb-5">
+          <div>
+            <p className="text-sm text-slate-500">
+              {workOrder.id}
+            </p>
+
+            <h2 className="text-2xl font-bold mt-1">
+              Assign Technician
+            </h2>
+
+            <p className="text-sm text-slate-500 mt-1">
+              Assign this work order to a maintenance team member.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-xl hover:bg-slate-100"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="mt-6 space-y-5">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+            <p className="text-xs text-slate-500">
+              Work Order
+            </p>
+
+            <h3 className="font-semibold text-slate-900 mt-1">
+              {workOrder.title}
+            </h3>
+
+            <p className="text-sm text-slate-500 mt-2">
+              {workOrder.line} - {workOrder.station}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Technician
+            </label>
+
+            <select
+              value={selectedTechnician}
+              onChange={(event) =>
+                setSelectedTechnician(event.target.value)
+              }
+              className="w-full border border-slate-300 rounded-2xl px-4 py-3 outline-none focus:border-blue-500"
+            >
+              {technicians.map((technician) => (
+                <option key={technician} value={technician}>
+                  {technician}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Due Date
+            </label>
+
+            <div className="flex items-center gap-3 border border-slate-300 rounded-2xl px-4 py-3">
+              <CalendarDays size={18} className="text-slate-400" />
+
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(event) =>
+                  setDueDate(event.target.value)
+                }
+                className="flex-1 outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 border border-slate-300 py-3 rounded-xl hover:bg-slate-50 transition"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={handleAssign}
+              className="flex-1 bg-orange-600 text-white py-3 rounded-xl hover:bg-orange-700 transition"
+            >
+              Assign Work Order
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const WorkOrders = () => {
-  const workOrders = useWorkOrderStore((state) => state.workOrders);
+  const [selectedWorkOrder, setSelectedWorkOrder] =
+    useState(null);
+
+  const workOrders = useWorkOrderStore(
+    (state) => state.workOrders
+  );
+
   const assignTechnician = useWorkOrderStore(
     (state) => state.assignTechnician
   );
+
   const updateWorkOrderStatus = useWorkOrderStore(
     (state) => state.updateWorkOrderStatus
   );
+
   const completeRequestById = useRequestStore(
-  (state) => state.completeRequestById
-);
+    (state) => state.completeRequestById
+  );
 
   const openOrders = workOrders.filter(
     (workOrder) => workOrder.status === "Open"
@@ -172,8 +358,13 @@ const WorkOrders = () => {
     (workOrder) => workOrder.status === "Completed"
   );
 
-  const handleAssign = (workOrderId) => {
-    assignTechnician(workOrderId, "Technician A");
+  const handleAssign = (
+    workOrderId,
+    technicianName,
+    dueDate
+  ) => {
+    assignTechnician(workOrderId, technicianName, dueDate);
+    setSelectedWorkOrder(null);
   };
 
   const handleStart = (workOrderId) => {
@@ -181,16 +372,16 @@ const WorkOrders = () => {
   };
 
   const handleComplete = (workOrderId) => {
-  const workOrder = workOrders.find(
-    (item) => item.id === workOrderId
-  );
+    const workOrder = workOrders.find(
+      (item) => item.id === workOrderId
+    );
 
-  updateWorkOrderStatus(workOrderId, "Completed");
+    updateWorkOrderStatus(workOrderId, "Completed");
 
-  if (workOrder?.sourceRequestId) {
-    completeRequestById(workOrder.sourceRequestId);
-  }
-};
+    if (workOrder?.sourceRequestId) {
+      completeRequestById(workOrder.sourceRequestId);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -242,103 +433,81 @@ const WorkOrders = () => {
         <EmptyState />
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          <div className="bg-slate-100 rounded-3xl p-4 min-h-[520px]">
-            <div className="flex items-center gap-3 mb-5">
-              <ClipboardList size={18} className="text-blue-600" />
+          <WorkOrderColumn
+            title="Open"
+            icon={ClipboardList}
+            iconColor="text-blue-600"
+            items={openOrders}
+          >
+            {openOrders.map((workOrder) => (
+              <WorkOrderCard
+                key={workOrder.id}
+                workOrder={workOrder}
+                onOpenAssignModal={setSelectedWorkOrder}
+                onStart={handleStart}
+                onComplete={handleComplete}
+              />
+            ))}
+          </WorkOrderColumn>
 
-              <h2 className="font-semibold">Open</h2>
+          <WorkOrderColumn
+            title="Assigned"
+            icon={UserCheck}
+            iconColor="text-orange-600"
+            items={assignedOrders}
+          >
+            {assignedOrders.map((workOrder) => (
+              <WorkOrderCard
+                key={workOrder.id}
+                workOrder={workOrder}
+                onOpenAssignModal={setSelectedWorkOrder}
+                onStart={handleStart}
+                onComplete={handleComplete}
+              />
+            ))}
+          </WorkOrderColumn>
 
-              <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm text-slate-600">
-                {openOrders.length}
-              </span>
-            </div>
+          <WorkOrderColumn
+            title="In Progress"
+            icon={PlayCircle}
+            iconColor="text-purple-600"
+            items={inProgressOrders}
+          >
+            {inProgressOrders.map((workOrder) => (
+              <WorkOrderCard
+                key={workOrder.id}
+                workOrder={workOrder}
+                onOpenAssignModal={setSelectedWorkOrder}
+                onStart={handleStart}
+                onComplete={handleComplete}
+              />
+            ))}
+          </WorkOrderColumn>
 
-            <div className="space-y-3">
-              {openOrders.map((workOrder) => (
-                <WorkOrderCard
-                  key={workOrder.id}
-                  workOrder={workOrder}
-                  onAssign={handleAssign}
-                  onStart={handleStart}
-                  onComplete={handleComplete}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-slate-100 rounded-3xl p-4 min-h-[520px]">
-            <div className="flex items-center gap-3 mb-5">
-              <UserCheck size={18} className="text-orange-600" />
-
-              <h2 className="font-semibold">Assigned</h2>
-
-              <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm text-slate-600">
-                {assignedOrders.length}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {assignedOrders.map((workOrder) => (
-                <WorkOrderCard
-                  key={workOrder.id}
-                  workOrder={workOrder}
-                  onAssign={handleAssign}
-                  onStart={handleStart}
-                  onComplete={handleComplete}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-slate-100 rounded-3xl p-4 min-h-[520px]">
-            <div className="flex items-center gap-3 mb-5">
-              <PlayCircle size={18} className="text-purple-600" />
-
-              <h2 className="font-semibold">In Progress</h2>
-
-              <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm text-slate-600">
-                {inProgressOrders.length}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {inProgressOrders.map((workOrder) => (
-                <WorkOrderCard
-                  key={workOrder.id}
-                  workOrder={workOrder}
-                  onAssign={handleAssign}
-                  onStart={handleStart}
-                  onComplete={handleComplete}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-slate-100 rounded-3xl p-4 min-h-[520px]">
-            <div className="flex items-center gap-3 mb-5">
-              <CheckCircle2 size={18} className="text-green-600" />
-
-              <h2 className="font-semibold">Completed</h2>
-
-              <span className="ml-auto bg-white px-3 py-1 rounded-full text-sm text-slate-600">
-                {completedOrders.length}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {completedOrders.map((workOrder) => (
-                <WorkOrderCard
-                  key={workOrder.id}
-                  workOrder={workOrder}
-                  onAssign={handleAssign}
-                  onStart={handleStart}
-                  onComplete={handleComplete}
-                />
-              ))}
-            </div>
-          </div>
+          <WorkOrderColumn
+            title="Completed"
+            icon={CheckCircle2}
+            iconColor="text-green-600"
+            items={completedOrders}
+          >
+            {completedOrders.map((workOrder) => (
+              <WorkOrderCard
+                key={workOrder.id}
+                workOrder={workOrder}
+                onOpenAssignModal={setSelectedWorkOrder}
+                onStart={handleStart}
+                onComplete={handleComplete}
+              />
+            ))}
+          </WorkOrderColumn>
         </div>
       )}
+
+      <AssignTechnicianModal
+        workOrder={selectedWorkOrder}
+        onClose={() => setSelectedWorkOrder(null)}
+        onAssign={handleAssign}
+      />
     </div>
   );
 };

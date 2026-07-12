@@ -18,13 +18,14 @@ export const useWorkOrderStore = create((set) => ({
       };
     }),
 
-  assignTechnician: (workOrderId, technicianName) =>
+  assignTechnician: (workOrderId, technicianName, dueDate) =>
     set((state) => ({
       workOrders: state.workOrders.map((workOrder) =>
         workOrder.id === workOrderId
           ? {
               ...workOrder,
               assignedTo: technicianName,
+              dueDate: dueDate || "Not set",
               status: "Assigned",
             }
           : workOrder
