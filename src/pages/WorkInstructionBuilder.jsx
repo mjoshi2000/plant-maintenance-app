@@ -4,7 +4,6 @@ import {
   Save,
   Send,
   Eye,
-  Trash2,
 } from "lucide-react";
 
 const tabs = [

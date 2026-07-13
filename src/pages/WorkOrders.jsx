@@ -1,4 +1,6 @@
-import { useState } from "react";
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
+import { useState,useEffect } from "react";
 
 import {
   ClipboardList,
@@ -39,6 +41,7 @@ const WorkOrderCard = ({
   onOpenAssignModal,
   onStart,
   onComplete,
+  onView,
 }) => {
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
@@ -51,8 +54,9 @@ const WorkOrderCard = ({
           <h3 className="mt-2 font-semibold text-slate-900">
             {workOrder.title}
           </h3>
+          
         </div>
-
+        
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium border ${
             priorityStyles[workOrder.priority]
@@ -63,6 +67,10 @@ const WorkOrderCard = ({
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-2 text-sm text-slate-600">
+        <p>
+  <p><strong>Work Instruction:</strong></p>{" "}
+  {workOrder.workInstructionName || "Not Linked"}
+</p>
         <p>
           <strong>Source:</strong> {workOrder.sourceRequestId}
         </p>
@@ -140,9 +148,18 @@ const WorkOrderCard = ({
           </div>
         )}
       </div>
+      <div className="mt-3">
+  <button
+    onClick={() => onView(workOrder)}
+    className="w-full border border-slate-300 py-2 rounded-xl hover:bg-slate-50"
+  >
+    View Details
+  </button>
+</div>
     </div>
   );
 };
+
 
 const WorkOrderColumn = ({
   title,
@@ -321,10 +338,167 @@ const AssignTechnicianModal = ({
     </div>
   );
 };
+const WorkOrderDetailsDrawer = ({
+  workOrder,
+  onClose,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (workOrder) {
+      setTimeout(() => setIsOpen(true), 10);
+    }
+  }, [workOrder]);
+
+  if (!workOrder) {
+    return null;
+  }
+
+  const closeDrawer = () => {
+    setIsOpen(false);
+
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  };
+
+  return (
+    <div className="fixed top-8 right-0 bottom-0 left-0 z-50 pointer-events-none">
+      <div
+        onClick={closeDrawer}
+        className={`absolute inset-0 bg-black/40 pointer-events-auto transition-opacity duration-300 ${
+          isOpen ? "opacity-100" : "opacity-0"
+        }`}
+      />
+
+      <div
+        className={`absolute right-0 top-0 h-full w-full max-w-xl bg-white pointer-events-auto shadow-2xl p-6 overflow-y-auto transition-transform duration-300 ${
+          isOpen
+            ? "translate-x-0"
+            : "translate-x-full"
+        }`}
+      >
+        <div className="flex justify-between items-start border-b pb-5">
+          <div>
+            <p className="text-sm text-slate-500">
+              {workOrder.id}
+            </p>
+
+            <h2 className="text-2xl font-bold">
+              {workOrder.title}
+            </h2>
+          </div>
+          <div className="border rounded-2xl p-4">
+  <p className="text-sm text-slate-500">
+    Due Date
+  </p>
+
+  <p className="font-semibold">
+    {workOrder.dueDate || "Not Assigned"}
+  </p>
+</div>
+<div className="border rounded-2xl p-4">
+  <p className="text-sm text-slate-500">
+    Created
+  </p>
+
+  <p className="font-semibold">
+    {workOrder.createdAt}
+  </p>
+</div>
+
+          <button
+            onClick={closeDrawer}
+            className="p-2 rounded-xl hover:bg-slate-100"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="mt-6 space-y-4">
+          <div className="border rounded-2xl p-4">
+            <p className="text-sm text-slate-500">
+              Priority
+            </p>
+
+            <p className="font-semibold">
+              {workOrder.priority}
+            </p>
+          </div>
+
+          <div className="border rounded-2xl p-4">
+            <p className="text-sm text-slate-500">
+              Status
+            </p>
+
+            <p className="font-semibold">
+              {workOrder.status}
+            </p>
+          </div>
+
+          <div className="border rounded-2xl p-4">
+            <p className="text-sm text-slate-500">
+              Technician
+            </p>
+
+            <p className="font-semibold">
+              {workOrder.assignedTo}
+            </p>
+          </div>
+
+          <div className="border rounded-2xl p-4">
+            <p className="text-sm text-slate-500">
+              Linked Request
+            </p>
+
+            <p className="font-semibold">
+              {workOrder.sourceRequestId}
+            </p>
+          </div>
+
+          <div className="border rounded-2xl p-4">
+            <p className="text-sm text-slate-500">
+              Work Instruction
+            </p>
+
+            <p className="font-semibold">
+              {workOrder.workInstructionName ||
+                "Not Linked"}
+            </p>
+          </div>
+
+          <div className="border rounded-2xl p-4">
+            <p className="text-sm text-slate-500">
+              Description
+            </p>
+
+            <p className="mt-2 text-slate-600">
+              {workOrder.description}
+            </p>
+          </div>
+
+          <button
+  onClick={() => {
+    alert(
+      `Opening ${workOrder.workInstructionName}`
+    );
+  }}
+  className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700"
+>
+  View Work Instruction
+</button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const WorkOrders = () => {
   const [selectedWorkOrder, setSelectedWorkOrder] =
-    useState(null);
+  useState(null);
+
+const [selectedWorkOrderForAssignment, setSelectedWorkOrderForAssignment] =
+  useState(null);
 
   const workOrders = useWorkOrderStore(
     (state) => state.workOrders
@@ -358,14 +532,19 @@ const WorkOrders = () => {
     (workOrder) => workOrder.status === "Completed"
   );
 
-  const handleAssign = (
+ const handleAssign = (
+  workOrderId,
+  technicianName,
+  dueDate
+) => {
+  assignTechnician(
     workOrderId,
     technicianName,
     dueDate
-  ) => {
-    assignTechnician(workOrderId, technicianName, dueDate);
-    setSelectedWorkOrder(null);
-  };
+  );
+
+  setSelectedWorkOrderForAssignment(null);
+};
 
   const handleStart = (workOrderId) => {
     updateWorkOrderStatus(workOrderId, "In Progress");
@@ -443,9 +622,10 @@ const WorkOrders = () => {
               <WorkOrderCard
                 key={workOrder.id}
                 workOrder={workOrder}
-                onOpenAssignModal={setSelectedWorkOrder}
+                onOpenAssignModal={setSelectedWorkOrderForAssignment}
                 onStart={handleStart}
                 onComplete={handleComplete}
+                onView={setSelectedWorkOrder}
               />
             ))}
           </WorkOrderColumn>
@@ -460,9 +640,10 @@ const WorkOrders = () => {
               <WorkOrderCard
                 key={workOrder.id}
                 workOrder={workOrder}
-                onOpenAssignModal={setSelectedWorkOrder}
+                onOpenAssignModal={setSelectedWorkOrderForAssignment}
                 onStart={handleStart}
                 onComplete={handleComplete}
+                onView={setSelectedWorkOrder}
               />
             ))}
           </WorkOrderColumn>
@@ -477,9 +658,10 @@ const WorkOrders = () => {
               <WorkOrderCard
                 key={workOrder.id}
                 workOrder={workOrder}
-                onOpenAssignModal={setSelectedWorkOrder}
+                onOpenAssignModal={setSelectedWorkOrderForAssignment}
                 onStart={handleStart}
                 onComplete={handleComplete}
+                onView={setSelectedWorkOrder}
               />
             ))}
           </WorkOrderColumn>
@@ -494,9 +676,10 @@ const WorkOrders = () => {
               <WorkOrderCard
                 key={workOrder.id}
                 workOrder={workOrder}
-                onOpenAssignModal={setSelectedWorkOrder}
+                onOpenAssignModal={setSelectedWorkOrderForAssignment}
                 onStart={handleStart}
                 onComplete={handleComplete}
+                onView={setSelectedWorkOrder}
               />
             ))}
           </WorkOrderColumn>
@@ -504,10 +687,16 @@ const WorkOrders = () => {
       )}
 
       <AssignTechnicianModal
-        workOrder={selectedWorkOrder}
-        onClose={() => setSelectedWorkOrder(null)}
-        onAssign={handleAssign}
-      />
+  workOrder={selectedWorkOrderForAssignment}
+  onClose={() =>
+    setSelectedWorkOrderForAssignment(null)
+  }
+  onAssign={handleAssign}
+/>
+      <WorkOrderDetailsDrawer
+  workOrder={selectedWorkOrder}
+  onClose={() => setSelectedWorkOrder(null)}
+/>
     </div>
   );
 };

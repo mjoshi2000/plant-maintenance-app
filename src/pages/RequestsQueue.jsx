@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -18,6 +19,8 @@ import {
 
 import { useRequestStore } from "../app/store/requestStore";
 import { useWorkOrderStore } from "../app/store/workOrderStore";
+import { workInstructionTemplates } from "../constants/workInstructionTemplates";
+
 
 const priorityStyles = {
   Critical: "bg-red-100 text-red-700 border-red-200",
@@ -181,7 +184,7 @@ const RequestDetailsDrawer = ({
     drawerRequest.status === "Approved";
 
   return (
-    <div className="fixed top-16 right-0 bottom-0 left-0 z-40 pointer-events-none">
+    <div className="fixed top-8 right-0 bottom-0 left-0 z-40 pointer-events-none">
       <div
         onClick={handleClose}
         className={`absolute inset-0 bg-slate-900/40 transition-opacity duration-300 pointer-events-auto ${
@@ -349,7 +352,73 @@ const RequestDetailsDrawer = ({
     </div>
   );
 };
+const CreateWorkOrderModal = ({
+  request,
+  selectedWI,
+  setSelectedWI,
+  onClose,
+  onCreate,
+}) => {
+  if (!request) return null;
 
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div
+        className="absolute inset-0 bg-black/40"
+        onClick={onClose}
+      />
+
+      <div className="relative bg-white rounded-3xl shadow-xl w-full max-w-lg p-6">
+        <h2 className="text-2xl font-bold">
+          Create Work Order
+        </h2>
+
+        <p className="text-slate-500 mt-2">
+          {request.title}
+        </p>
+
+        <div className="mt-6">
+          <label className="block text-sm font-medium mb-2">
+            Work Instruction
+          </label>
+
+          <select
+            value={selectedWI}
+            onChange={(event) =>
+              setSelectedWI(Number(event.target.value))
+            }
+            className="w-full border rounded-xl p-3"
+          >
+            {workInstructionTemplates.map((template) => (
+              <option
+                key={template.id}
+                value={template.id}
+              >
+                {template.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex gap-3 mt-8">
+          <button
+            onClick={onClose}
+            className="flex-1 border rounded-xl py-3"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={onCreate}
+            className="flex-1 bg-blue-600 text-white rounded-xl py-3"
+          >
+            Create Work Order
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 const RequestsQueue = () => {
   const rawRequestGroups = useRequestStore(
     (state) => state.requestGroups
@@ -367,6 +436,12 @@ const RequestsQueue = () => {
 
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [message, setMessage] = useState("");
+  const [selectedRequestForWO, setSelectedRequestForWO] =
+  useState(null);
+
+const [selectedWI, setSelectedWI] = useState(
+  workInstructionTemplates[0].id
+);
 
   const handleApprove = (request) => {
     moveRequest(request, "approved", "Approved");
@@ -378,32 +453,66 @@ const RequestsQueue = () => {
     setMessage(`${request.id} rejected.`);
   };
 
-  const handleCreateWorkOrder = (request) => {
-    const workOrderId = `WO-${request.id.replace("MR-", "")}`;
+ const handleCreateWorkOrder = (request) => {
+  setSelectedRequestForWO(request);
+};
+const createWorkOrderFromModal = () => {
+  const request = selectedRequestForWO;
 
-    const newWorkOrder = {
-      id: workOrderId,
-      sourceRequestId: request.id,
-      title: request.title,
-      line: request.line,
-      station: request.station,
-      priority: request.priority,
-      status: "Open",
-      assignedTo: "Unassigned",
-      createdAt: "Just now",
-      description: request.description,
-    };
+  if (!request) return;
 
-    addWorkOrder(newWorkOrder);
-
-    moveRequest(
-      request,
-      "workOrderCreated",
-      "Work Order Created"
+  const selectedTemplate =
+    workInstructionTemplates.find(
+      (template) => template.id === selectedWI
     );
 
-    setMessage(`${workOrderId} created from ${request.id}.`);
+  const workOrderId = `WO-${request.id.replace(
+    "MR-",
+    ""
+  )}`;
+
+  const newWorkOrder = {
+    id: workOrderId,
+
+    sourceRequestId: request.id,
+
+    title: request.title,
+
+    workInstructionId: selectedTemplate.id,
+
+    workInstructionName:
+      selectedTemplate.name,
+
+    line: request.line,
+
+    station: request.station,
+
+    priority: request.priority,
+
+    status: "Open",
+
+    assignedTo: "Unassigned",
+
+    createdAt: "Just now",
+
+    description: request.description,
   };
+
+  addWorkOrder(newWorkOrder);
+
+  moveRequest(
+    request,
+    "workOrderCreated",
+    "Work Order Created"
+  );
+
+  setMessage(
+    `${workOrderId} created using ${selectedTemplate.name}`
+  );
+
+  setSelectedRequestForWO(null);
+};
+  
 
   const totalRequests =
     requestGroups.submitted.length +
@@ -568,6 +677,13 @@ const RequestsQueue = () => {
         onReject={handleReject}
         onCreateWorkOrder={handleCreateWorkOrder}
       />
+      <CreateWorkOrderModal
+  request={selectedRequestForWO}
+  selectedWI={selectedWI}
+  setSelectedWI={setSelectedWI}
+  onClose={() => setSelectedRequestForWO(null)}
+  onCreate={createWorkOrderFromModal}
+/>
     </div>
   );
 };
