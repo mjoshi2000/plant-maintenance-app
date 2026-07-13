@@ -12,6 +12,7 @@ import NotFound from "../../pages/NotFound";
 import MaintenanceRequest from "../../pages/MaintenanceRequest";
 import RequestsQueue from "../../pages/RequestsQueue";
 import WorkOrders from "../../pages/WorkOrders";
+import WorkInstructionBuilder from "../../pages/WorkInstructionBuilder"
 
 export const router = createBrowserRouter([
   {
@@ -54,6 +55,10 @@ export const router = createBrowserRouter([
         {
         path: "work-orders",
         element: <WorkOrders />,
+        },
+        {
+        path: "work-instructions/new",
+        element: <WorkInstructionBuilder />,
         },
     ],
   },
